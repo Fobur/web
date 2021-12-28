@@ -21,7 +21,7 @@ def cv_index():
         res += f"<p>{cv['substr(dateModify,1,4)']} - {cv['count(dateModify)']}</p>"
 
     res += f"\n<h2>Какая-то статистика</h2>"
-    res += some_statistic();
+    res += statistic()
 
     return res
 
@@ -76,18 +76,16 @@ def create_figure():
 
 
 @app.route("/statistic")
-def some_statistic():
+def statistic():
     job_titles = get_list_field('jobTitle')
     qualifications = get_list_field('qualification')
     res = ""
     people_count = count_people_with_non_matched_fields(job_titles, qualifications)
     res += f"<p>Из {people_count[1]} людей не совпадают профессия и должность у {people_count[0]}</p>"
-
-    res += f"<p>Топ 3 образований людей, которые работают инструкторами:</p>"
-    res += get_top_n(3, job_titles, qualifications, "инструктор")
-
-    res += f"<p>Топ 5 должностей людей, которые по диплому являются замами:</p>"
-    res += get_top_n(5, qualifications, job_titles, "зам.")
+    res += f"<p>Топ 5 образований людей, которые работают инструкторами:</p>"
+    res += get_top_n(5, job_titles, qualifications, "инструктор")
+    res += f"<p>Топ 10 должностей людей, которые по диплому являются инженерами:</p>"
+    res += get_top_n(10, qualifications, job_titles, "инженер")
     return res
 
 
@@ -95,7 +93,8 @@ def get_top_n(n, field_to_search, field_to_return, str_to_search):
     res = ''
     full_top = top(field_to_search, field_to_return, str_to_search)
     for i in range(n):
-        res += f"<p>- {full_top[i][0]} - {full_top[i][1]} чел.</p>"
+        if i < full_top.count():
+            res += f"<p>- {full_top[i][0]} - {full_top[i][1]} чел.</p>"
     return res
 
 
