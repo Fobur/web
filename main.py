@@ -24,8 +24,15 @@ def cv_index():
 
 @app.route("/dashboard")
 def dashboard():
-    return render_template('d3.html',
+    con = sqlite3.connect('works.sqlite')
+    con.row_factory = dict_factory
+    res = con.execute('select substr(dateModify,1,4), count(dateModify) '
+                      'from works where dateModify is not null group by substr(dateModify,1,4);').fetchall()
+    con.close()
+    return render_template('d1.html',
                            cvs=get_cv(),
+                           labels=[row[0] for row in res],
+                           data=[row[1] for row in res]
                            )
 
 
@@ -62,6 +69,5 @@ def create_figure():
     ys = [random.randint(1, 50) for x in xs]
     axis.plot(xs, ys)
     return fig
-
 
 app.run()

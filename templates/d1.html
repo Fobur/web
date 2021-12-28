@@ -304,17 +304,11 @@
 			  var myChart = new Chart(ctx, {
 				type: 'line',
 				data: {
-				  labels: [
-					'2019',
-					'2020',
-					'2021'
-				  ],
+				  {% autoescape false %}
+				  labels: {{ labels }}
+				  {% endautoescape %},
 				  datasets: [{
-					data: [
-					  1967,
-					  6407,
-					  24308
-					],
+					data: {{ data }},
 					lineTension: 0,
 					backgroundColor: 'transparent',
 					borderColor: '#007bff',
