@@ -21,7 +21,7 @@ def cv_index():
         res += f"<p>{cv['substr(dateModify,1,4)']} - {cv['count(dateModify)']}</p>"
 
     res += f"\n<h2>Какая-то статистика</h2>"
-    res += statistic();
+    res += some_statistic();
 
     return res
 
@@ -76,16 +76,18 @@ def create_figure():
 
 
 @app.route("/statistic")
-def statistic():
-    jobTitles = get_list_field('jobTitle')
+def some_statistic():
+    job_titles = get_list_field('jobTitle')
     qualifications = get_list_field('qualification')
     res = ""
-    people_count = count_people_with_non_matched_fields(jobTitles, qualifications)
+    people_count = count_people_with_non_matched_fields(job_titles, qualifications)
     res += f"<p>Из {people_count[1]} людей не совпадают профессия и должность у {people_count[0]}</p>"
-    res += f"<p>Топ 5 образований людей, которые работают инструкторами:</p>"
-    res += get_top_n(5, jobTitles, qualifications, "инструктор")
-    res += f"<p>Топ 10 должностей людей, которые по диплому являются инженерами:</p>"
-    res += get_top_n(5, qualifications, jobTitles, "инженер")
+
+    res += f"<p>Топ 3 образований людей, которые работают инструкторами:</p>"
+    res += get_top_n(3, job_titles, qualifications, "инструктор")
+
+    res += f"<p>Топ 5 должностей людей, которые по диплому являются замами:</p>"
+    res += get_top_n(5, qualifications, job_titles, "зам.")
     return res
 
 
@@ -105,8 +107,7 @@ def get_list_field(field):
 
 
 def count_people_with_non_matched_fields(field1, field2):
-    res_count = 0
-    total = 0
+    res_count, total = 0
     for (f1, f2) in zip(field1, field2):
         total += 1
         if not find_match(f1[0], f2[0]) and not find_match(f2[0], f1[0]):
