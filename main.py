@@ -5,7 +5,6 @@ import sqlite3
 import random
 import io
 
-from collections import Counter
 from matplotlib.backends.backend_agg import FigureCanvasAgg as FigureCanvas
 from matplotlib.figure import Figure
 
@@ -20,16 +19,12 @@ def cv_index():
     for i, cv in enumerate(cvs):
         res += f"<p>{cv['substr(dateModify,1,4)']} - {cv['count(dateModify)']}</p>"
 
-    res += f"\n<h2>Какая-то статистика</h2>"
-    res += statistic()
-
     return res
 
 
 @app.route("/dashboard")
 def dashboard():
     con = sqlite3.connect('works.sqlite')
-    con.row_factory = dict_factory
     res = con.execute('select substr(dateModify,1,4), count(dateModify) '
                       'from works where dateModify is not null group by substr(dateModify,1,4);').fetchall()
     con.close()
@@ -77,36 +72,35 @@ def create_figure():
 
 @app.route("/statistic")
 def statistic():
-    job_titles = get_list_field('jobTitle')
-    qualifications = get_list_field('qualification')
+    job_titles = get_field('jobTitle')
+    qualifications = get_field('qualification')
     res = ""
     people_count = count_people_with_non_matched_fields(job_titles, qualifications)
     res += f"<p>Из {people_count[1]} людей не совпадают профессия и должность у {people_count[0]}</p>"
-    res += f"<p>Топ 5 образований людей, которые работают инструкторами:</p>"
-    res += get_top_n(5, job_titles, qualifications, "инструктор")
-    res += f"<p>Топ 10 должностей людей, которые по диплому являются инженерами:</p>"
-    res += get_top_n(10, qualifications, job_titles, "инженер")
+    res += f"\n<p>Список зарплат у людей со скиллами в python:</p>"
+    python_salaries = get_python_salary()
+    for i in python_salaries:
+        res += f"<p>{i[0]} руб.</p>"
+
     return res
 
 
-def get_top_n(n, field_to_search, field_to_return, str_to_search):
-    res = ''
-    full_top = top(field_to_search, field_to_return, str_to_search)
-    for i in range(n):
-        if i < full_top.count():
-            res += f"<p>- {full_top[i][0]} - {full_top[i][1]} чел.</p>"
-    return res
-
-
-def get_list_field(field):
+def get_field(field):
     con = sqlite3.connect('works.sqlite')
     res = list(con.execute(f'select {field} from works'))
     con.close()
     return res
 
+def get_python_salary():
+    con = sqlite3.connect('works.sqlite')
+    res = list(con.execute("select salary from works where skills is"
+                           " not null and instr(lower(skills),'python')"))
+    con.close()
+    return res
+
 
 def count_people_with_non_matched_fields(field1, field2):
-    res_count, total = 0
+    res_count, total = 0, 0
     for (f1, f2) in zip(field1, field2):
         total += 1
         if not find_match(f1[0], f2[0]) and not find_match(f2[0], f1[0]):
@@ -122,14 +116,4 @@ def find_match(f1, f2):
     return False
 
 
-def top(f_to_search, f_to_return, str_to_search):
-    res = []
-    for (f_s, f_r) in zip(f_to_search, f_to_return):
-        if str(f_s[0]).lower().find(str_to_search[:-2]) != -1:
-            if str(f_r[0]).find('None') == -1:
-                res.append(f_r[0])
-
-    return Counter(res).most_common()
-
-
-app.run()
+app.run(debug=True)
